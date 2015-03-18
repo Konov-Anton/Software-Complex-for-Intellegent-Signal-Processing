@@ -20,12 +20,13 @@ namespace WindowsFormsApplication1
         Form2 newMDIChildForm2;
         public static int windowX = 0;
         public static int windowY = 0;
-        bool changesHaveBeenMade = false;
+        public static bool changesHaveBeenMade = false;
         public static bool Exit = false;
         public static Size mainWindowSize;
         public static int difBtwMainAndWorkSpace;
-        bool fileContainerNotCreatedYet = true;
+        public static bool fileContainerNotCreatedYet = true;
         public static bool closeOrChange = true;
+        bool hideContextMenuStripForFileContainer = true;
         public MDIParent1()
         {
             InitializeComponent();
@@ -45,20 +46,37 @@ namespace WindowsFormsApplication1
                     if (FileNames.Count != 0)
                         currentFile++;
                     FileNames.Add(openFileDialog.FileName);
-                    информацияОФайлеToolStripMenuItem.Enabled = true;
-                    спектрToolStripMenuItem.Enabled = true;
-                    масштабToolStripMenuItem.Enabled = true;
-                    максимизироватьПоШиринеToolStripMenuItem.Enabled = true;
-                    минимизироватьToolStripMenuItem.Enabled = true;
-                    максимизироватьПоВысотеToolStripMenuItem.Enabled = true;
+                    closeToolStripMenuItem.Enabled = true;
+                    fileInfoToolStripMenuItem.Enabled = true;
+                    spectrumToolStripMenuItem.Enabled = true;
+                    scaleToolStripMenuItem.Enabled = true;
+                    maximizeTheWidthToolStripMenuItem.Enabled = true;
+                    minimizeToolStripMenuItem.Enabled = true;
+                    maximizeTheHeightToolStripMenuItem.Enabled = true;
                     if (fileContainerNotCreatedYet == true)
                     {
-                        listBox1.Height = this.Height - 87;
-                        listBox1.Show();
+                        listView1.Height = this.Height - 87;
+                        listView1.Show();
                         fileContainerNotCreatedYet = false;
                     }
                     string[] splitted = openFileDialog.FileName.Split('\\');
-                    listBox1.Items.Add(splitted[splitted.Length - 1]);   
+                    string name = splitted[splitted.Length - 1];
+                    if (name.Length > 33)
+                    {
+                        listView1.Items.Add(name.Substring(0,30) + "...");
+                        
+                    }
+                    else
+                    {
+                        int spaceCount = 57 - name.Length;
+                        string[] array = new string[spaceCount];
+                        for (int i=0; i<spaceCount; i++)
+                        {
+                            array[i] = " ";
+                        }
+                        string tail = String.Concat(array);
+                        listView1.Items.Add(name+tail);
+                    }
                     if (visualRepresentationShowing == false)
                     {
                         newMDIChildForm1 = new Form1();
@@ -146,13 +164,13 @@ namespace WindowsFormsApplication1
         }
 
 
-        private void информацияОФайлеToolStripMenuItem_CheckStateChanged(object sender, EventArgs e)
+        private void fileInfoToolStripMenuItem_CheckStateChanged(object sender, EventArgs e)
         {
             if (Exit == false)
             {
                 if (FileNames[currentFile] != "")
                 {
-                    if (информацияОФайлеToolStripMenuItem.Checked == true)
+                    if (fileInfoToolStripMenuItem.Checked == true)
                     {
                         newMDIChildForm2 = new Form2();
                         newMDIChildForm2.DesktopLocation = new Point(300, 300);
@@ -163,7 +181,7 @@ namespace WindowsFormsApplication1
                     else
                     {
                         newMDIChildForm2.Close();
-                        информацияОФайлеToolStripMenuItem.Checked = false;
+                        fileInfoToolStripMenuItem.Checked = false;
                     }
                 }
             }
@@ -213,20 +231,20 @@ namespace WindowsFormsApplication1
             }
         }
 
-        private void максимизироватьПоШиринеToolStripMenuItem_Click(object sender, EventArgs e)
+        private void maximizeTheWidthToolStripMenuItem_Click(object sender, EventArgs e)
         {
             newMDIChildForm1.Location = new Point(0,newMDIChildForm1.Location.Y);
-            newMDIChildForm1.Width = this.Width-listBox1.Width-20;
+            newMDIChildForm1.Width = this.Width-listView1.Width-20;
         }
 
-        private void максимизироватьПоВысотеToolStripMenuItem_Click(object sender, EventArgs e)
+        private void maximizeTheHeightToolStripMenuItem_Click(object sender, EventArgs e)
         {
             newMDIChildForm1.Location = new Point(newMDIChildForm1.Location.X, 0);
             newMDIChildForm1.Height = this.Bounds.Height - 92;
             Form1.MaxHeight(newMDIChildForm1);
         }
 
-        private void минимизироватьToolStripMenuItem_Click(object sender, EventArgs e)
+        private void minimizeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             newMDIChildForm1.Location = new Point(0, newMDIChildForm1.Location.Y);
             newMDIChildForm1.Width = 600;
@@ -242,13 +260,141 @@ namespace WindowsFormsApplication1
         private void MDIParent1_Resize(object sender, EventArgs e)
         {
             if (fileContainerNotCreatedYet == false)
-                listBox1.Height = this.Bounds.Height - 87;
+                listView1.Height = this.Bounds.Height - 87;
         }
 
         public static void SetFileInfoUncheckedValue ()
         {
-            информацияОФайлеToolStripMenuItem.Checked = false;
+            fileInfoToolStripMenuItem.Checked = false;
         }
+        //private void listView1_SelectedIndexChanged_1(object sender, EventArgs e)
+        //{
+        //    if (listView1.SelectedIndices[0] >= 0)
+        //    {
+        //        if (listView1.SelectedIndices[0] != currentFile)
+        //        {
+        //            MDIParent1.currentFile = listView1.SelectedIndices[0];
+        //            if (visualRepresentationShowing == false)
+        //            {
+        //                newMDIChildForm1 = new Form1();
+        //                newMDIChildForm1.MdiParent = this;
+        //                newMDIChildForm1.Location = new Point(windowX, windowY);
+        //                newMDIChildForm1.Show();
+        //                visualRepresentationShowing = true;
+        //            }
+        //            else
+        //            {
+        //                closeOrChange = false;
+        //                newMDIChildForm1.Close();
+        //                newMDIChildForm1 = new Form1();
+        //                newMDIChildForm1.MdiParent = this;
+        //                newMDIChildForm1.Location = new Point(windowX, windowY);
+        //                newMDIChildForm1.Show();
+        //                visualRepresentationShowing = true;
+        //                closeOrChange = true;
+        //            }
+        //        }
+        //    }
+        //}
+
+        private void listView1_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            if (listView1.SelectedIndices.Count > 0)
+            {
+                if (listView1.SelectedIndices[0] >= 0)
+                {
+                    if (listView1.SelectedIndices[0] != currentFile || (listView1.SelectedIndices[0]==0 && currentFile==0))
+                    {
+                        MDIParent1.currentFile = listView1.SelectedIndices[0];
+                        if (visualRepresentationShowing == false)
+                        {
+                            newMDIChildForm1 = new Form1();
+                            newMDIChildForm1.MdiParent = this;
+                            newMDIChildForm1.Location = new Point(windowX, windowY);
+                            newMDIChildForm1.Show();
+                            visualRepresentationShowing = true;
+                        }
+                        else
+                        {
+                            closeOrChange = false;
+                            newMDIChildForm1.Close();
+                            newMDIChildForm1 = new Form1();
+                            newMDIChildForm1.MdiParent = this;
+                            newMDIChildForm1.Location = new Point(windowX, windowY);
+                            newMDIChildForm1.Show();
+                            visualRepresentationShowing = true;
+                            closeOrChange = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void listView1_ItemMouseHover(object sender, ListViewItemMouseHoverEventArgs e)
+        {
+            if (e.Item != null)
+            {
+                    e.Item.ToolTipText = FileNames[e.Item.Index];
+            }
+        }
+
+        private void listView1_ItemActivate(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void listView1_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+                {
+                    if (listView1.FocusedItem != null)
+                    {
+                        if (e.X < listView1.FocusedItem.Position.X + listView1.FocusedItem.Bounds.Width &&
+                            e.Y < listView1.FocusedItem.Position.Y + listView1.FocusedItem.Bounds.Height)
+                        {
+                            listView1.ContextMenuStrip = contextMenuStrip1;
+                            hideContextMenuStripForFileContainer = false;
+                        }
+                        else
+                            if (hideContextMenuStripForFileContainer == false)
+                            {
+                                listView1.ContextMenuStrip = null;
+                                hideContextMenuStripForFileContainer = true;
+                            }
+                        listView1.FocusedItem.Focused = false;
+                    }
+                }       
+        }
+
+        private void closeAllExceptThisToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            int i = 0;
+            while (FileNames.Count > 1)
+            {
+                if (i != currentFile)
+                {
+                    FileNames.Remove(FileNames[i]);
+                    listView1.Items.Remove(listView1.Items[i]);
+                    i--;
+                    if (i < currentFile)
+                    {
+                        currentFile--;                       
+                    }
+                }
+                i++;
+            }
+            
+        }
+
+        //private void openInNewWindowToolStripMenuItem_Click(object sender, EventArgs e)
+        //{
+        //    MDIParent1 newMainWindow = new MDIParent1();
+        //    newMainWindow.Text = "Интеллектуальная обработка сигналов (побочное окно)";
+        //    newMainWindow.Show();
+        //    listView1.Items.Add(FileNames[currentFile]);
+        //    listView1.Show();
+        //}
 
     }
 }
+

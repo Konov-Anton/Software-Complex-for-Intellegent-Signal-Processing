@@ -20,11 +20,11 @@ namespace WindowsFormsApplication1
         int mid;
         Point PickOutFrom=new Point(-1,-1);
         Point PickOutBefore=new Point (-1,-1);
-        bool MouseMoves = false;
+        bool areaIsSelected = false;
         bool CursorPainted = false;
         Bitmap bmp;
         double pos = 0;
-        //int count;
+        bool leftMouseButtonPressed = false;
 
         public Form1()
         {
@@ -44,6 +44,7 @@ namespace WindowsFormsApplication1
                     e.Graphics.DrawLine(System.Drawing.Pens.Gray, pictureBox1.Location.X, mid, pictureBox1.Width, mid);
                     e.Graphics.DrawLine(System.Drawing.Pens.Black, pictureBox1.Location.X, pictureBox1.Height - 5, pictureBox1.Width, pictureBox1.Height - 5);
                     float x = (float)pictureBox1.Location.X;
+                    float xTimeAxis = (float)pictureBox1.Location.X;
                     int upperBound;
                     int emptyPart=0;
                     if (pos * newWav.LeftChData.Length + newWav.sampleRate*10 > newWav.LeftChData.Length - 1)
@@ -54,28 +55,35 @@ namespace WindowsFormsApplication1
                     }
                     else
                         upperBound = (int)(pos * newWav.LeftChData.Length + newWav.sampleRate * 10);
-                    for (int i = (int)(pos*newWav.LeftChData.Length); i < upperBound; i=i+1)
-                    {
-                        if (i % (newWav.sampleRate * 10) == 0)
+                    bool paint = true;
+                    for (int i = (int)(pos * newWav.LeftChData.Length), l = (int)(pos * newWav.LeftChData.Length); paint; i = i + 4, l=l+1)
                         {
-                            e.Graphics.DrawLine(System.Drawing.Pens.Black, (float)x, pictureBox1.Height - 5, (float)x, pictureBox1.Height - 12);
-                            double time = i / newWav.sampleRate;
-                            string duration = WAV.GetDuration(time);
-                            System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 8);
-                            System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
-                            e.Graphics.DrawString(duration, drawFont, drawBrush, x, pictureBox1.Height - 20);
-                            drawFont.Dispose();
-                            drawBrush.Dispose();
-                        }
-                        else
-                            if (i % newWav.sampleRate == 0)
+                            if (l % (newWav.sampleRate * 10) == 0)
                             {
-                                e.Graphics.DrawLine(System.Drawing.Pens.Black, (float)x, pictureBox1.Height - 5, (float)x, pictureBox1.Height - 8);
+                                e.Graphics.DrawLine(System.Drawing.Pens.Black, (float)xTimeAxis, pictureBox1.Height - 5, (float)xTimeAxis, pictureBox1.Height - 12);
+                                double time = l / newWav.sampleRate;
+                                string duration = WAV.GetDuration(time);
+                                System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 8);
+                                System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
+                                e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
+                                drawFont.Dispose();
+                                drawBrush.Dispose();
                             }
-
-                        e.Graphics.DrawLine(System.Drawing.Pens.Blue, (float)x, (float)(mid + newWav.LeftChData[i]/512), (float)(x + step), (float)(mid + newWav.LeftChData[i + 1]/512));
-                        x = (float)(x + step);
-                    }
+                            else
+                                if (l % newWav.sampleRate == 0)
+                                {
+                                    e.Graphics.DrawLine(System.Drawing.Pens.Black, (float)xTimeAxis, pictureBox1.Height - 5, (float)xTimeAxis, pictureBox1.Height - 8);
+                                }
+                            if (i < upperBound - 3)
+                            {
+                                e.Graphics.DrawLine(System.Drawing.Pens.Blue, (float)x, (float)(mid + newWav.LeftChData[i] / 512), (float)(x + 4 * step), (float)(mid + newWav.LeftChData[i + 4] / 512));
+                                x = (float)(x + 4 * step);
+                            }
+                            else
+                                if (l >= upperBound)
+                                    paint = false;
+                            xTimeAxis = (float)(xTimeAxis + step);
+                        }
                     if (pos * newWav.LeftChData.Length + newWav.sampleRate * 10 > newWav.LeftChData.Length - 1)
                     {
                         e.Graphics.FillRectangle(System.Drawing.Brushes.Gray, (float)x, pictureBox1.Location.Y, emptyPart - x, pictureBox1.Height);
@@ -149,10 +157,17 @@ namespace WindowsFormsApplication1
                 string[] splitted = MDIParent1.FileNames[MDIParent1.currentFile].Split('\\');
                 string name = splitted[splitted.Length - 1];
                 MDIParent1.FileNames.Remove(MDIParent1.FileNames[MDIParent1.currentFile]);
-                MDIParent1.listBox1.Items.Remove(name);
+                MDIParent1.listView1.Items.Remove(MDIParent1.listView1.Items[MDIParent1.currentFile]);
                 MDIParent1.visualRepresentationShowing = false;
                 if (MDIParent1.currentFile != 0)
                     MDIParent1.currentFile--;
+                if (MDIParent1.FileNames.Count == 0)
+                {
+                    MDIParent1.listView1.Hide();
+                    MDIParent1.fileContainerNotCreatedYet = true;
+                }
+                if (MDIParent1.FileNames.Count == 0)
+                    MDIParent1.closeToolStripMenuItem.Enabled = false;
             }
         }
         private void Form1_Activated(object sender, EventArgs e)
@@ -196,41 +211,107 @@ namespace WindowsFormsApplication1
 
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            MouseMoves = true;
-            PickOutFrom = Control.MousePosition;
-            if (CursorPainted == false)
-            {
-                g.DrawLine(System.Drawing.Pens.Gray, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace, pictureBox1.Location.Y, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace, pictureBox1.Height);
-                pictureBox1.Image = bmp;
-                CursorPainted = true;
-            }
-            else
-            {
-                g.Clear(Color.White);
-                g.DrawLine(System.Drawing.Pens.Gray, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace, pictureBox1.Location.Y, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace, pictureBox1.Height);
-                pictureBox1.Image = bmp;
-            }
+            //PickOutFrom = Control.MousePosition;
+            //if (CursorPainted == false)
+            //{
+            //    g.DrawLine(System.Drawing.Pens.Gray, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width, pictureBox1.Location.Y, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width, pictureBox1.Height);
+            //    pictureBox1.Image = bmp;
+            //    CursorPainted = true;
+            //}
+            //else
+            //{
+            //    g.Clear(Color.White);
+            //    g.DrawLine(System.Drawing.Pens.Gray, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width, pictureBox1.Location.Y, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width, pictureBox1.Height);
+            //    pictureBox1.Image = bmp;
+            //}
             
         }
 
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
-            MouseMoves = false;
-        }
-        private void Form1_LocationChanged(object sender, EventArgs e)
-        {
-            MDIParent1.difBtwMainAndWorkSpace = 0 - this.Location.X - 8;
+            leftMouseButtonPressed = false;
+            pictureBox1.Image = bmp;
         }
 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            PickOutBefore = Control.MousePosition;
+            leftMouseButtonPressed = true;
+            PickOutFrom = Control.MousePosition;
+            if (CursorPainted == false)
+            {
+                g.DrawLine(System.Drawing.Pens.Gray, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width, pictureBox1.Location.Y, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width, pictureBox1.Height);
+                pictureBox1.Image = bmp;
+                CursorPainted = true;
+            }
+            else
+            {
+                    g.Clear(Color.White);
+                    g.DrawLine(System.Drawing.Pens.Gray, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width, pictureBox1.Location.Y, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width, pictureBox1.Height);
+            }
+            areaIsSelected = false;
+            OnMouseMove(e);
         }
 
         private void hScrollBar1_Scroll(object sender, ScrollEventArgs e)
         {
             pos = hScrollBar1.Value/100.0;
             pictureBox1.Refresh();           
+        }
+        private void Form1_LocationChanged(object sender, EventArgs e)
+        {
+            MDIParent1.difBtwMainAndWorkSpace = 0 - this.Location.X - 8;
+        }
+
+
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+                if (MDIParent1.changesHaveBeenMade == true)
+                {
+                    string[] splitted = MDIParent1.FileNames[MDIParent1.currentFile].Split('\\');
+                    string name = splitted[splitted.Length - 1];
+                    var response = MessageBox.Show("Сохранить изменения в " + name + "?", "Интелектуальная обработка сигналов",
+                                 MessageBoxButtons.YesNoCancel,
+                                 MessageBoxIcon.Question);
+                    if (response == System.Windows.Forms.DialogResult.No)
+                        e.Cancel = false;
+                    else if (response == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        WAV.Writing(WAV.Reading(MDIParent1.FileNames[MDIParent1.currentFile]), MDIParent1.FileNames[MDIParent1.currentFile]);
+                        e.Cancel = false;
+                    }
+                    else
+                    {
+                        e.Cancel = true;
+                    }
+                }
+        }
+
+        private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (leftMouseButtonPressed == true)
+            {
+                if (areaIsSelected == false)
+                    g.Clear(Color.White);
+                PickOutBefore = Control.MousePosition;
+                if (PickOutBefore.X > PickOutFrom.X)
+                {
+                    g.FillRectangle(System.Drawing.Brushes.Black, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width,
+                        pictureBox1.Location.Y,
+                        Math.Abs(PickOutBefore.X - PickOutFrom.X),
+                        pictureBox1.Height - 20);
+                    pictureBox1.Image = bmp;
+                }
+                else
+                {
+                    g.FillRectangle(System.Drawing.Brushes.Black, PickOutBefore.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width,
+                        pictureBox1.Location.Y,
+                        Math.Abs(PickOutBefore.X - PickOutFrom.X),
+                        pictureBox1.Height - 20);
+                    pictureBox1.Image = bmp;
+                }
+                areaIsSelected = true;
+            }
         }
     }
 }
