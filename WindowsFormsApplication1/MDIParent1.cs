@@ -166,7 +166,7 @@ namespace WindowsFormsApplication1
 
         private void fileInfoToolStripMenuItem_CheckStateChanged(object sender, EventArgs e)
         {
-            if (Exit == false)
+            if (Exit == false || FileNames.Count != 0)
             {
                 if (FileNames[currentFile] != "")
                 {
