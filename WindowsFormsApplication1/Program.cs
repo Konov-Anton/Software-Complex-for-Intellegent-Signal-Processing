@@ -268,6 +268,8 @@ namespace WindowsFormsApplication1
             string secondsStr = seconds+"";
             if (secondsStr.Length==1)
                 secondsStr = "0"+secondsStr;
+            string [] temp = secondsStr.Split('.');
+            secondsStr = String.Join("", temp);
             duration = hoursStr+":"+minutesStr+":"+secondsStr;
             return duration;
         }
