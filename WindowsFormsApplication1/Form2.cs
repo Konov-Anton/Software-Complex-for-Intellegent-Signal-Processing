@@ -45,7 +45,7 @@ namespace WindowsFormsApplication1
             double dur = (double)Form1.newWav.wavData.Length/(double)Form1.newWav.fmtAvgBPS;
             duration = WAV.GetDuration(dur);
             string size = Form1.newWav.wavData.Length*8/Form1.newWav.channels/Form1.newWav.bitDepth+" сэмплов";
-            string[] row8 = { "Длительность", duration + " " + size};
+            string[] row8 = { "Длительность", duration + "    " + size};
             double fileSize = (double)Math.Round((decimal)Form1.newWav.fileSize/1024/1024, 2);
             string[] row9 = { "Размер файла", fileSize+" Мб"};
             dataGridView1.Rows.Add(row0);

@@ -15,9 +15,10 @@ namespace WindowsFormsApplication1
         private int childFormNumber = 0;
         public static List<string> FileNames = new List<string> { };
         public static int currentFile=0;
-        Form1 newMDIChildForm1;
         public static bool visualRepresentationShowing = false;
-        Form2 newMDIChildForm2;
+        public static Form1 newMDIChildForm1;
+        public static Form2 newMDIChildForm2;
+        public static Form4 spectrumWindow;
         public static int windowX = 0;
         public static int windowY = 0;
         public static bool changesHaveBeenMade = false;
@@ -27,6 +28,7 @@ namespace WindowsFormsApplication1
         public static bool fileContainerNotCreatedYet = true;
         public static bool closeOrChange = true;
         bool hideContextMenuStripForFileContainer = true;
+        public static double[] globalMagnitudes;
         public MDIParent1()
         {
             InitializeComponent();
@@ -263,9 +265,33 @@ namespace WindowsFormsApplication1
                 listView1.Height = this.Bounds.Height - 87;
         }
 
-        public static void SetFileInfoUncheckedValue ()
+        public static void SetSpectrumUncheckedValue()
+        {
+            spectrumToolStripMenuItem.Checked = false;
+        }
+
+        public static bool spectrumCheckState()
+        {
+            return spectrumToolStripMenuItem.Checked;
+        }
+
+        public static void SetSpectrumCheckedValue()
+        {
+            spectrumToolStripMenuItem.Checked = true;
+        }
+
+        public static void SetFileInfoUncheckedValue()
         {
             fileInfoToolStripMenuItem.Checked = false;
+        }
+
+        public static void SetFileInfoCheckedValue()
+        {
+            fileInfoToolStripMenuItem.Checked = true;
+        }
+        public static bool FileInfoCheckState ()
+        {
+            return fileInfoToolStripMenuItem.Checked;
         }
         //private void listView1_SelectedIndexChanged_1(object sender, EventArgs e)
         //{
@@ -386,15 +412,110 @@ namespace WindowsFormsApplication1
             
         }
 
-        //private void openInNewWindowToolStripMenuItem_Click(object sender, EventArgs e)
-        //{
-        //    MDIParent1 newMainWindow = new MDIParent1();
-        //    newMainWindow.Text = "Интеллектуальная обработка сигналов (побочное окно)";
-        //    newMainWindow.Show();
-        //    listView1.Items.Add(FileNames[currentFile]);
-        //    listView1.Show();
-        //}
+        public static Complex[] FftWithWindow (Complex[] forFft)
+        {        
+            Complex[] fftCoefs = new Complex [2048];
+            for (int i = 0 ; i < 2048; i++)
+            {
+                fftCoefs[i] = new Complex(0, 0);
+            }
+            int k = 0;
+            for (int i = 0; i + 2048 < forFft.Length; i=i+512)
+            {
+                Complex[] forFftWindow = new Complex[2048];
+                Array.Copy(forFft, i, forFftWindow, 0, 2048);                
+                Complex[] fftWindow = Fourier.FFT(forFftWindow);
+                for (int j=0; j<2048; j++)
+                {
+                    fftCoefs[j] += fftWindow[j];
+                }
+                k++;
+            }
+            Complex kk = new Complex (k,0);
+            for (int i = 0; i < 2048; i++)
+            {
+                fftCoefs[i] = fftCoefs[i] / kk;
+            }
+            Complex[] fftCoefs2 = new Complex[fftCoefs.Length/2];
+            Array.Copy(fftCoefs, fftCoefs2, fftCoefs2.Length);
+            return fftCoefs2;
+        }
 
+        private void fFTToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFft = new SaveFileDialog();
+            saveFft.InitialDirectory = Application.StartupPath;
+            saveFft.Filter = "Текстовый документ (*.txt)|*.txt|Все файлы (*.*)|*.*";
+            double[] normalizedData = WAV.GetNormalizedData(Form1.newWav);
+           
+            //double[] normalizedData = new double[1024];
+            //Array.Copy(WAV.GetNormalizedData(Form1.newWav), normalizedData, 1024);
+            Complex[] forFft = Fourier.PrepareToFFT(normalizedData);
+            for (int j = 0; j < normalizedData.Length; j++)
+            {
+                normalizedData[j] = normalizedData[j] * (0.53836 - 0.46164 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)));
+            }
+            Complex[] fftCoefs = Fourier.FFT(forFft);
+            //Complex[] fftCoefs = FftWithWindow(forFft);
+            //double[] magn = Fourier.GetMagnitude(fftCoefs);
+           
+            string text = "";
+            for (int i=0; i<fftCoefs.Length; i++)
+            {
+                text += fftCoefs[i].ToString() + "\r\n";
+                //text += magn[i] + "\r\n";
+            }
+            if (saveFft.ShowDialog(this) == DialogResult.OK)
+            {
+                string FileName = saveFft.FileName;
+                System.IO.File.WriteAllText(FileName, text);
+            }
+        }
+        private void spectrumToolStripMenuItem_CheckStateChanged(object sender, EventArgs e)
+        {
+            if (Exit == false || FileNames.Count != 0)
+            {
+                if (FileNames[currentFile] != "")
+                {
+                    if (spectrumToolStripMenuItem.Checked == true)
+                    {
+                        double[] normalizedData = WAV.GetNormalizedData(Form1.newWav);
+                        //for (int j = 0; j < normalizedData.Length; j++)
+                        //{
+                        //    normalizedData[j] = normalizedData[j] * (0.53836 - 0.46164 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)));
+                        //}
+                        Complex[] forFft = Fourier.PrepareToFFT(normalizedData);
+                        Complex[] fftCoefs = Fourier.FFT(forFft);
+                        double[] magn = Fourier.GetMagnitude(fftCoefs);
+                        globalMagnitudes = new double[magn.Length / 2];
+                        Array.Copy(magn, globalMagnitudes, globalMagnitudes.Length);
+                        for (int i = 0; i < globalMagnitudes.Length; i++)                       // нормировка (нужна ли)
+                        {
+                            globalMagnitudes[i] = (double)(2 * globalMagnitudes[i] / 2048);
+                        }
+                        globalMagnitudes[0] /= 2;
+                        spectrumWindow = new Form4();
+                        spectrumWindow.DesktopLocation = new Point(300, 600);
+                        spectrumWindow.MdiParent = this;
+
+                        spectrumWindow.Show();
+                    }
+                    else
+                    {
+                        spectrumWindow.Close();
+                        spectrumToolStripMenuItem.Checked = false;
+                    }
+                }
+            }
+            else
+                spectrumWindow.Close();
+        }
+
+        private void mFCCToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form5 mfccWindow = new Form5();
+            mfccWindow.Show();
+        }
     }
 }
 

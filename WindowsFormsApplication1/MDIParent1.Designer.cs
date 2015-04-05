@@ -53,7 +53,7 @@
             this.removeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.redoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMenu = new System.Windows.Forms.ToolStripMenuItem();
-            this.spectrumToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            spectrumToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             fileInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setColorsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
@@ -308,7 +308,7 @@
             // viewMenu
             // 
             this.viewMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.spectrumToolStripMenuItem,
+            spectrumToolStripMenuItem,
             fileInfoToolStripMenuItem,
             this.setColorsToolStripMenuItem,
             this.toolStripSeparator5,
@@ -322,11 +322,12 @@
             // 
             // spectrumToolStripMenuItem
             // 
-            this.spectrumToolStripMenuItem.CheckOnClick = true;
-            this.spectrumToolStripMenuItem.Enabled = false;
-            this.spectrumToolStripMenuItem.Name = "spectrumToolStripMenuItem";
-            this.spectrumToolStripMenuItem.Size = new System.Drawing.Size(240, 22);
-            this.spectrumToolStripMenuItem.Text = "Спектр";
+            spectrumToolStripMenuItem.CheckOnClick = true;
+            spectrumToolStripMenuItem.Enabled = false;
+            spectrumToolStripMenuItem.Name = "spectrumToolStripMenuItem";
+            spectrumToolStripMenuItem.Size = new System.Drawing.Size(240, 22);
+            spectrumToolStripMenuItem.Text = "Спектр";
+            spectrumToolStripMenuItem.CheckStateChanged += new System.EventHandler(spectrumToolStripMenuItem_CheckStateChanged);
             // 
             // fileInfoToolStripMenuItem
             // 
@@ -442,25 +443,27 @@
             // fFTToolStripMenuItem
             // 
             this.fFTToolStripMenuItem.Name = "fFTToolStripMenuItem";
-            this.fFTToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.fFTToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.fFTToolStripMenuItem.Text = "FFT";
+            this.fFTToolStripMenuItem.Click += new System.EventHandler(this.fFTToolStripMenuItem_Click);
             // 
             // lPCToolStripMenuItem
             // 
             this.lPCToolStripMenuItem.Name = "lPCToolStripMenuItem";
-            this.lPCToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.lPCToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.lPCToolStripMenuItem.Text = "LPC";
             // 
             // mFCCToolStripMenuItem
             // 
             this.mFCCToolStripMenuItem.Name = "mFCCToolStripMenuItem";
-            this.mFCCToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.mFCCToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.mFCCToolStripMenuItem.Text = "MFCC";
+            this.mFCCToolStripMenuItem.Click += new System.EventHandler(this.mFCCToolStripMenuItem_Click);
             // 
             // pLPToolStripMenuItem
             // 
             this.pLPToolStripMenuItem.Name = "pLPToolStripMenuItem";
-            this.pLPToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.pLPToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.pLPToolStripMenuItem.Text = "PLP";
             // 
             // windowsMenu
@@ -813,11 +816,12 @@
         private System.Windows.Forms.ToolStripMenuItem supportVectorMachineToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem vectorQuantinizationToolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem gaussianMixtureModelToolStripMenuItem2;
-        private System.Windows.Forms.ToolStripMenuItem supportVectorMachineToolStripMenuItem2;
-        private System.Windows.Forms.ToolStripMenuItem spectrumToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem supportVectorMachineToolStripMenuItem2;       
         private System.Windows.Forms.ToolStripMenuItem minimizeToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem closeAllExceptThisToolStripMenuItem;
+
+        public static System.Windows.Forms.ToolStripMenuItem spectrumToolStripMenuItem;
         public static System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
         public static System.Windows.Forms.ListView listView1;
         private static System.Windows.Forms.ToolStripMenuItem fileInfoToolStripMenuItem;

@@ -9,6 +9,269 @@ using System.Collections.Specialized;
 using System.Text;
 namespace WindowsFormsApplication1
 {
+    public class Complex
+    {
+        public double real = 0.0;
+        public double imaginary = 0.0;
+        public Complex()
+        {
+        }
+
+        public Complex(double real, double im)
+        {
+            this.real = real;
+            this.imaginary = im;
+        }
+
+        public string ToString()
+        {
+            string complexValue = real.ToString() + " " + imaginary.ToString() + "i";
+            return complexValue;
+        }
+
+        public static Complex FromPolarToRectangular(double r, double radians)
+        {
+            Complex complexValue = new Complex(r * Math.Cos(radians), r * Math.Sin(radians));
+            return complexValue;
+        }
+
+        public static Complex operator + (Complex a, Complex b)
+        {
+            Complex sum = new Complex(a.real + b.real, a.imaginary + b.imaginary);
+            return sum;
+        }
+
+        public static Complex operator - (Complex a, Complex b)
+        {
+            Complex dif = new Complex(a.real - b.real, a.imaginary - b.imaginary);
+            return dif;
+        }
+
+        public static Complex operator * (Complex a, Complex b)
+        {
+            Complex prod = new Complex(a.real * b.real - a.imaginary * b.imaginary,
+                a.real * b.imaginary + a.imaginary * b.real);
+            return prod;
+        }
+
+        public static Complex operator / (Complex a, Complex b)
+        {
+            Complex quo = new Complex((a.real * b.real + a.imaginary * b.imaginary) / (b.real * b.real + b.imaginary * b.imaginary),
+                (b.real * a.imaginary - b.imaginary * a.real) / (b.real * b.real + b.imaginary * b.imaginary));
+            return quo;
+        }
+        public double ComplexAbs (Complex a)
+        {
+            return (Math.Sqrt(a.real * a.real + a.imaginary * a.imaginary));
+        }
+
+        public double GetPhase (Complex a)
+        {
+            return Math.Atan(a.imaginary / a.real);
+        }
+    }
+
+    class Coefficients
+    {
+        public static List<List<double>> MFCC (double[] source, int frameLength, int frameInc,
+           int mfccSize, int filtersNumber, int sampleRate, int minFreq, int maxFreq, string wnd)
+        {
+            mfccSize = mfccSize + 1; //потому что выкинем первый
+            List<List<double>> result = new List<List<double>>();
+            for (int i = 0; i + frameLength < source.Length + 1 ; i += frameInc)
+            {
+                double[] normalizedData = new double[frameLength];
+                normalizedData[0] = 0;
+                for (int j = 1; j < normalizedData.Length; j++)
+                    normalizedData[j] = normalizedData[j] - normalizedData[j - 1];
+                Array.Copy(source, i, normalizedData, 0, frameLength);
+                if (wnd == "hm")
+                    for (int j = 0; j < normalizedData.Length; j++)
+                    {
+                        normalizedData[j] = normalizedData[j] * (0.53836 - 0.46164 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)));
+                    }
+                if (wnd == "hn")
+                    for (int j = 0; j < normalizedData.Length; j++)
+                    {
+                        normalizedData[j] = normalizedData[j] * (0.5 * (1 - Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1))));
+                    }
+                if (wnd == "bm")
+                    for (int j = 0; j < normalizedData.Length; j++)
+                    {
+                        normalizedData[j] = normalizedData[j] * (0.42 - 0.5 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)) + 0.08 * Math.Cos((4 * Math.PI * j) / (normalizedData.Length - 1)));
+                    }
+                Complex[] forFft = Fourier.PrepareToFFT(normalizedData);
+                Complex[] fftCoefs = Fourier.FFT(forFft);
+                //Complex[] fftCoefsHalf = new Complex[fftCoefs.Length / 2];
+                //Array.Copy(fftCoefs, fftCoefsHalf, fftCoefsHalf.Length);         
+                //double[] magnitudes = Fourier.GetMagnitude(fftCoefsHalf);
+                double[] magnitudes = Fourier.GetMagnitude(fftCoefs);
+                double minFreqMel = freqToMel(minFreq);
+                double maxFreqMel = freqToMel(maxFreq);
+                double[] melFreqs = new double [filtersNumber + 2]; 
+                for (int j = 0; j < filtersNumber + 2; j++)
+                {
+                    melFreqs[j] = minFreqMel + j * (maxFreqMel - minFreqMel) / (filtersNumber + 1);
+                }
+                double[] freqs = new double[melFreqs.Length];
+                for (int j = 0; j < melFreqs.Length; j++)
+                {
+                    freqs[j] = melToFreq(melFreqs[j]);
+                }
+                int[] gcps = new int[freqs.Length];
+                for (int j = 0; j < freqs.Length; j++)
+                {
+                    gcps[j] = (int)Math.Floor((frameLength + 1) * freqs[j] / sampleRate);
+                }
+                double [,] filters = new double [mfccSize, frameLength];
+                for (int m = 1; m < mfccSize + 1; m++)
+                    for (int k = 0; k < frameLength; k++)
+                    {
+                        if (gcps[m - 1] <= k && k <= gcps[m])
+                        {
+                            filters[m - 1, k] = (k - gcps[m - 1]) / (gcps[m] - gcps[m - 1]);
+                        }
+                        else
+                            if (gcps[m] <= k && k <= gcps[m + 1])
+                            {
+                                filters[m - 1, k] = (gcps[m + 1] - k) / (gcps[m + 1] - gcps[m]);
+                            }
+                            else
+                                filters[m - 1, k] = 0;
+                    }
+                double[] S = new double[mfccSize];
+                for (int m = 0; m < mfccSize; m++)
+                {
+                    double sum = 0;
+                    for (int k = 0; k < frameLength; k++)
+                    {
+                        sum += magnitudes[k] * magnitudes[k] * filters[m, k];
+                    }
+                    S[m] = Math.Log(sum);
+                }
+                double[] mfcc = new double[mfccSize];
+                for (int l = 0; l < mfccSize; l++)
+                {
+                    double sum = 0;
+                    for (int m = 0; m < mfccSize; m++)
+                        sum += S[m] * Math.Cos(Math.PI * l * (m + 0.5) / mfccSize);
+                    mfcc[l] = sum;
+                }
+                List<double> mfccList = new List<double>();
+                mfccList = mfcc.ToList();
+                result.Add(mfccList);
+                mfccList.Remove(mfccList[0]);
+            }
+            return result;
+        }
+
+        public static double freqToMel (double freq)
+        {
+            return 1127 * Math.Log(1 + freq / 700, Math.E);
+        }
+
+        public static double melToFreq (double mel)
+        {
+            return 700 * (Math.Exp(mel / 1127) - 1);
+        }
+    }
+    class Fourier
+    {
+        public static Complex[] FFT(Complex[] x)
+        {
+            if (x.Length == 1)
+            {
+                return new Complex[] {x[0]};
+            }
+            if (x.Length == 2)
+            {
+                return new Complex[] {x[0] + x[1], x[0] - x[1] };
+            }
+            int N = x.Length;
+            Complex[] X = new Complex[N];
+            Complex[] even, Even, odd, Odd;
+
+            even = new Complex[N / 2];
+            odd = new Complex[N / 2];
+
+            for (int i = 0; i < N / 2; i++)
+            {
+                even[i] = x[2 * i];
+                odd[i] = x[2 * i + 1];
+            } 
+            Even = FFT(even);
+            Odd = FFT(odd);
+
+            for (int i = 0; i < N / 2; i++)
+            {
+                Complex arg = Complex.FromPolarToRectangular(1, -2 * Math.PI * i / N);
+                X[i] = Even[i] + Odd[i] * arg;
+                X[i + N / 2] = Even[i] - Odd[i] * arg;
+            }            
+            return X;    
+        }
+
+        public static List<List<Complex>> FftWithWindow(double[] source, int frameLength, int increment)
+        {
+            List<List<Complex>> result = new List<List<Complex>>();
+            for (int i = 0; i + frameLength < source.Length + 1; i += increment)
+            {
+                double[] normalizedData = new double[frameLength];
+                Array.Copy(source, i, normalizedData, 0, frameLength);
+                for (int j = 0; j < normalizedData.Length; j++)
+                {
+                    normalizedData[j] = normalizedData[j] * (0.53836 - 0.46164 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)));
+                }
+                Complex[] forFft = Fourier.PrepareToFFT(normalizedData);
+                Complex[] fftCoefs = Fourier.FFT(forFft);
+                List<Complex> fftList = new List<Complex>();
+                fftList = fftCoefs.ToList();
+                result.Add(fftList);
+            }
+            return result;
+        }
+
+        public static double[] GetMagnitude (Complex[] fftCoefs)
+        {
+            double[] magn = new double[fftCoefs.Length];
+            for (int i = 0; i < fftCoefs.Length; i++)
+            {
+                magn[i] = Math.Sqrt(fftCoefs[i].real * fftCoefs[i].real + fftCoefs[i].imaginary * fftCoefs[i].imaginary);
+            }
+            return magn;
+        }
+        public static Complex[] PrepareToFFT(double[] data)
+        {
+            int len = data.Length;
+            int pow = 0;
+            while(len>1)
+            {
+                len = len / 2;
+                pow++;
+            }
+            if (data.Length - Math.Pow(2, pow) > Math.Pow(2, pow + 1) - data.Length)
+                len = (int)Math.Pow(2, pow + 1);
+            else
+                len = (int)Math.Pow(2, pow);
+            Complex[] complexData = new Complex[data.Length];
+            for (int i = 0 ; i < data.Length; i++)
+            {
+                complexData[i] = new Complex(data[i], 0);
+            }
+            Complex[] forFft = new Complex[len];
+            if (len > data.Length)
+            {
+                Array.Copy(complexData, forFft, data.Length);
+                for (int i = data.Length; i < len; i++)
+                    forFft[i] = new Complex(0, 0);
+            }
+            else
+            {
+                Array.Copy(complexData, forFft, len);
+            }
+            return forFft;
+        }
+    }
     public class WAV
     {
         public uint chunkID;
@@ -86,6 +349,8 @@ namespace WindowsFormsApplication1
                         {
                             double[,] temp = GetWavData16bit2chan(currentFile);
                             int samples = currentFile.wavData.Length / 4;
+                            currentFile.LeftChData = new double[samples];
+                            currentFile.RightChData = new double[samples];
                             for (int i = 0; i < samples; i++)
                             {
                                 currentFile.LeftChData[i] = temp[0, i];
@@ -137,12 +402,28 @@ namespace WindowsFormsApplication1
             int j = 0;
             while (i < samples)
             {
-                LeftChData[i] = bytesToDouble(curFile.wavData[j], curFile.wavData[j + 1]);
+                LeftChData[i] = bytesToCountValue(curFile.wavData[j], curFile.wavData[j + 1]);
                 j += 2;
                 i++;
             }
             //for (int k = 0; k < 1000; k++)
             //    Console.Write(LeftCh[k] + " ");
+            return LeftChData;
+        }
+
+
+        public static double[] GetNormalizedData(WAV curFile)
+        {
+            int samples = curFile.wavData.Length / 2; //16 bit  mono
+            double[] LeftChData = new double[samples];
+            int i = 0;
+            int j = 0;
+            while (i < samples)
+            {
+                LeftChData[i] = bytesToDouble(curFile.wavData[j], curFile.wavData[j + 1]);
+                j += 2;
+                i++;
+            }
             return LeftChData;
         }
         public static double[,] GetWavData16bit2chan(WAV curFile)
@@ -154,9 +435,9 @@ namespace WindowsFormsApplication1
             int j = 0;
             while (i < samples)
             {
-                data[0, i] = bytesToDouble(curFile.wavData[j], curFile.wavData[j + 1]);
+                data[0, i] = bytesToCountValue(curFile.wavData[j], curFile.wavData[j + 1]);
                 j += 2;
-                data[1, i] = bytesToDouble(curFile.wavData[j], curFile.wavData[j + 1]);
+                data[1, i] = bytesToCountValue(curFile.wavData[j], curFile.wavData[j + 1]);
                 j += 2;
                 i++;
             }
@@ -245,12 +526,18 @@ namespace WindowsFormsApplication1
             writer.Close();
         }
 
-        static double bytesToDouble(byte firstByte, byte secondByte)
+        static double bytesToCountValue(byte firstByte, byte secondByte)
         {
             //short s = (short)((secondByte << 8) | firstByte);
             //return s / 32768.000;
             short countValue = (short)((secondByte << 8) | firstByte);
             return countValue;
+        }
+
+        public static double bytesToDouble(byte firstByte, byte secondByte)
+        {
+            short s = (short)((secondByte << 8) | firstByte);
+            return s / 32768.000;
         }
 
         public static string GetDuration (double dur)
