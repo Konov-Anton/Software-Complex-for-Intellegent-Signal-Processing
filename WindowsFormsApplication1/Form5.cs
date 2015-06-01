@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace WindowsFormsApplication1
 {
@@ -16,7 +17,7 @@ namespace WindowsFormsApplication1
         {
             InitializeComponent();
         }
-        public static bool cantBlockWindow = false;
+        
         string window = "hm";
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -33,12 +34,13 @@ namespace WindowsFormsApplication1
         private void button1_Click(object sender, EventArgs e)
         {
             SaveFileDialog saveFft = new SaveFileDialog();
-            saveFft.InitialDirectory = Application.StartupPath;
-            saveFft.Filter = "Текстовый документ (*.txt)|*.txt|Все файлы (*.*)|*.*";
+            Directory.CreateDirectory(Application.StartupPath + "\\MFCC");
+            saveFft.InitialDirectory = Application.StartupPath + "\\MFCC";
+            saveFft.Filter = "Текстовый документ (*.txt)|*.txt";
             //double[] source = new double[1024];
             //Array.Copy(Form1.newWav.LeftChData, source, 1024);
-            double[] source = Form1.newWav.LeftChData;
-            List<List<double>> mffcList = Coefficients.MFCC(source, Convert.ToInt32(textBox1.Text), 
+            double[] source = WAV.GetNormalizedData(Form1.newWav);
+            List<List<double>> mffcList = SignalProcessing.MFCC(source, Convert.ToInt32(textBox1.Text), 
                 Convert.ToInt32(textBox1.Text) - Convert.ToInt32(textBox2.Text),
                 Convert.ToInt32(textBox4.Text),
                 Convert.ToInt32(textBox3.Text),
@@ -46,28 +48,30 @@ namespace WindowsFormsApplication1
                 Convert.ToInt32(textBox5.Text),
                 Convert.ToInt32(textBox6.Text),
                 window);
-            string text = "";
-            foreach (List<double> set in mffcList)
+            string[] text = new string[mffcList.Count];
+            for (int i = 0; i < mffcList.Count; i++)
             {
-                foreach (object coef in set)
+                for (int j = 0; j < mffcList[i].Count; j++)
                 {
-                    text += coef + ", ";
+                    if (j != mffcList[i].Count - 1)
+                        text[i] += Math.Round(mffcList[i][j], 3) + ", ";
+                    else
+                        text[i] += Math.Round(mffcList[i][j], 3);
                 }
-                text += "\r\n";
             }
+               
             if (saveFft.ShowDialog(this) == DialogResult.OK)
             {
                 string FileName = saveFft.FileName;
-                System.IO.File.WriteAllText(FileName, text);
+                System.IO.File.WriteAllLines(FileName, text);
             }
             this.Close();
         }
 
         private void Form5_Load(object sender, EventArgs e)
         {
-            this.Location = new Point(MDIParent1.windowX, MDIParent1.windowY);
             textBox6.Text = (Form1.newWav.sampleRate / 2).ToString();
-            cantBlockWindow = true;
+            Form1.cantBlockWindow = true;
         }
 
         private void textBox1_Leave(object sender, EventArgs e)
@@ -87,7 +91,7 @@ namespace WindowsFormsApplication1
         }
         private void Form5_FormClosed(object sender, FormClosedEventArgs e)
         {
-            cantBlockWindow = false;
+            Form1.cantBlockWindow = false;
         }
 
         private void textBox2_Leave(object sender, EventArgs e)
@@ -101,7 +105,10 @@ namespace WindowsFormsApplication1
             if (Char.IsDigit(e.KeyChar))
             {
             }
-
+            else
+                    if (Char.IsControl(e.KeyChar) && textBox2.Text != "")
+                    {
+                    }
             else
             {
                 e.Handled = true;
@@ -113,7 +120,10 @@ namespace WindowsFormsApplication1
             if (Char.IsDigit(e.KeyChar))
             {
             }
-
+            else
+                if (Char.IsControl(e.KeyChar) && textBox2.Text != "")
+                {
+                }
             else
             {
                 e.Handled = true;
@@ -125,7 +135,10 @@ namespace WindowsFormsApplication1
             if (Char.IsDigit(e.KeyChar))
             {
             }
-
+            else
+                if (Char.IsControl(e.KeyChar) && textBox2.Text != "")
+                {
+                }
             else
             {
                 e.Handled = true;
@@ -137,7 +150,10 @@ namespace WindowsFormsApplication1
             if (Char.IsDigit(e.KeyChar))
             {
             }
-
+            else
+                if (Char.IsControl(e.KeyChar) && textBox2.Text != "")
+                {
+                }
             else
             {
                 e.Handled = true;
@@ -149,6 +165,10 @@ namespace WindowsFormsApplication1
             if (Char.IsDigit(e.KeyChar))
             {
             }
+            else
+                if (Char.IsControl(e.KeyChar) && textBox2.Text != "")
+                {
+                }
 
             else
             {
@@ -161,6 +181,10 @@ namespace WindowsFormsApplication1
             if (Char.IsDigit(e.KeyChar))
             {
             }
+            else
+                if (Char.IsControl(e.KeyChar) && textBox2.Text != "")
+                {
+                }
 
             else
             {

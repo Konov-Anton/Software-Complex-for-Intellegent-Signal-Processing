@@ -29,6 +29,13 @@ namespace WindowsFormsApplication1
         public static bool closeOrChange = true;
         bool hideContextMenuStripForFileContainer = true;
         public static double[] globalMagnitudes;
+        public static int modeOfLpcWindow;
+        public static int classificationMode;
+        public static int filterMode;
+        public static int pictureMode;
+        public static int identificationTask;
+        public static bool specialCase1 = false;
+        WAV bufferCut = new WAV();
         public MDIParent1()
         {
             InitializeComponent();
@@ -40,7 +47,7 @@ namespace WindowsFormsApplication1
             OpenFileDialog openFileDialog = new OpenFileDialog();
             //openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
             openFileDialog.InitialDirectory = "D:/Учебный год 2013-2014 мать его за ногу/материалы по курсовой работе/1мин/30сек";
-            openFileDialog.Filter = "Аудио файлы (*.wav)|*.wav|Все файлы (*.*)|*.*";
+            openFileDialog.Filter = "Аудио файлы (*.wav)|*.wav";
             if (openFileDialog.ShowDialog(this) == DialogResult.OK)
             {
                 if (FileNames.Contains(openFileDialog.FileName) == false)
@@ -55,6 +62,20 @@ namespace WindowsFormsApplication1
                     maximizeTheWidthToolStripMenuItem.Enabled = true;
                     minimizeToolStripMenuItem.Enabled = true;
                     maximizeTheHeightToolStripMenuItem.Enabled = true;
+                    спектрограммаToolStripMenuItem.Enabled = true;
+                    silenceRemovalToolStripMenuItem.Enabled = true;
+                    lowPassFilterToolStripMenuItem.Enabled = true;
+                    highPassFilterToolStripMenuItem.Enabled = true;
+                    bandPassFilterToolStripMenuItem.Enabled = true;
+                    полоснозаграждающийФильтрToolStripMenuItem.Enabled = true;
+                    movingAverageFilterToolStripMenuItem.Enabled = true;
+                    fFTToolStripMenuItem.Enabled = true;
+                    lPCToolStripMenuItem.Enabled = true;
+                    cepstralToolStripMenuItem.Enabled = true;
+                    mFCCToolStripMenuItem.Enabled = true;
+                    pLPToolStripMenuItem.Enabled = true;
+                    pitchToolStripMenuItem.Enabled = true;
+                    formantsToolStripMenuItem.Enabled = true;
                     if (fileContainerNotCreatedYet == true)
                     {
                         listView1.Height = this.Height - 87;
@@ -127,35 +148,89 @@ namespace WindowsFormsApplication1
 
         private void CutToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                //copy
+                changesHaveBeenMade = true;
+                int c = Form1.countUnderCursor;
+                int end = Form1.countUnderCursorEnd;
+                if (Form1.countUnderCursor % 2 == 1)
+                    c++;
+                if (Form1.countUnderCursorEnd % 2 == 1)
+                    end++;
+                bufferCut = CreateBuffer(Form1.newWav);
+                bufferCut.LeftChData = new double[end - c];
+                for (int i = c; i < end; i++)
+                    bufferCut.LeftChData[i - c] = Form1.newWav.LeftChData[i];
+                
+                //cut
+                WAV buffer = CreateBuffer(Form1.newWav);
+                buffer.LeftChData = new double[Form1.newWav.LeftChData.Length - bufferCut.LeftChData.Length];
+                for(int i = 0; i<c; i++)
+                    buffer.LeftChData[i]=Form1.newWav.LeftChData[i];
+                for(int i=c; i<buffer.LeftChData.Length; i++)
+                    buffer.LeftChData[i]=Form1.newWav.LeftChData[end+i-c];
+
+                 buffer.wavData = WAV.ComputeBytesOfWavData(buffer.LeftChData, true);
+                    Form1.buf[0] = Form1.newWav;
+                    Form1.buf[1] = buffer;
+                    Form1.newWav = CreateBuffer(buffer);
+                MDIParent1.newMDIChildForm1.Width += 1;
+            }
         }
 
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                int c = Form1.countUnderCursor;
+                int end = Form1.countUnderCursorEnd;
+                if (Form1.countUnderCursor % 2 == 1)
+                    c++;
+                if (Form1.countUnderCursorEnd % 2 == 1)
+                    end++;
+                bufferCut = CreateBuffer(Form1.newWav);
+                bufferCut.LeftChData = new double[end - c];
+                for (int i = c; i < end; i++)
+                    bufferCut.LeftChData[i-c] = Form1.newWav.LeftChData[i];
+                MDIParent1.newMDIChildForm1.Width += 1;
+            }
         }
 
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                if (bufferCut != null)
+                {
+                    changesHaveBeenMade = true;
+                    int c = Form1.countUnderCursor;
+                    if (Form1.countUnderCursor % 2 == 1)
+                        c++;
+                    WAV buffer = CreateBuffer(Form1.newWav);
+                    buffer.LeftChData = new double[Form1.newWav.LeftChData.Length + bufferCut.LeftChData.Length];
+                    for (int i = 0; i < c; i++)
+                        buffer.LeftChData[i] = Form1.newWav.LeftChData[i];
+                    for (int i = c; i < c + bufferCut.LeftChData.Length; i++)
+                        buffer.LeftChData[i] = bufferCut.LeftChData[i - c];
+                    for (int i = c + bufferCut.LeftChData.Length; i < buffer.LeftChData.Length; i++)
+                        buffer.LeftChData[i] = Form1.newWav.LeftChData[i - bufferCut.LeftChData.Length];
+                    
+                    buffer.wavData = WAV.ComputeBytesOfWavData(buffer.LeftChData, true);
+                    Form1.buf[0] = Form1.newWav;
+                    Form1.buf[1] = buffer;
+                    Form1.newWav = CreateBuffer(buffer);
+                    MDIParent1.newMDIChildForm1.Width += 1;
+                }
+            }
         }
 
-        private void CascadeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            LayoutMdi(MdiLayout.Cascade);
-        }
-
-        private void TileVerticalToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            LayoutMdi(MdiLayout.TileVertical);
-        }
-
-        private void TileHorizontalToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            LayoutMdi(MdiLayout.TileHorizontal);
-        }
-
-        private void ArrangeIconsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            LayoutMdi(MdiLayout.ArrangeIcons);
-        }
 
         private void CloseAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -168,7 +243,11 @@ namespace WindowsFormsApplication1
 
         private void fileInfoToolStripMenuItem_CheckStateChanged(object sender, EventArgs e)
         {
-            if (Exit == false || FileNames.Count != 0)
+            if (MDIParent1.FileNames.Count == 0)
+            {
+                MessageBox.Show("Нет открытых файлов");
+            }
+            if (Exit == false && FileNames.Count != 0)
             {
                 if (FileNames[currentFile] != "")
                 {
@@ -187,7 +266,7 @@ namespace WindowsFormsApplication1
                     }
                 }
             }
-            else
+            if (Exit == true)
                 newMDIChildForm2.Close();
         }
 
@@ -210,26 +289,6 @@ namespace WindowsFormsApplication1
             if (FileNames.Count != 0)
             {
                 Exit = true;
-                if (changesHaveBeenMade == true)
-                {
-                    string[] splitted = MDIParent1.FileNames[MDIParent1.currentFile].Split('\\');
-                    string name = splitted[splitted.Length - 1];
-                    var response = MessageBox.Show("Сохранить изменения в " + name + "?", "Интелектуальная обработка сигналов",
-                                 MessageBoxButtons.YesNoCancel,
-                                 MessageBoxIcon.Question);
-                    if (response == System.Windows.Forms.DialogResult.No)
-                        e.Cancel = false;
-                    else if (response == System.Windows.Forms.DialogResult.Yes)
-                    {
-                        WAV.Writing(WAV.Reading(FileNames[currentFile]), FileNames[currentFile]);
-                        e.Cancel = false;
-                    }
-                    else
-                    {
-                        e.Cancel = true;
-                        Exit = false;
-                    }
-                }
             }
         }
 
@@ -293,35 +352,7 @@ namespace WindowsFormsApplication1
         {
             return fileInfoToolStripMenuItem.Checked;
         }
-        //private void listView1_SelectedIndexChanged_1(object sender, EventArgs e)
-        //{
-        //    if (listView1.SelectedIndices[0] >= 0)
-        //    {
-        //        if (listView1.SelectedIndices[0] != currentFile)
-        //        {
-        //            MDIParent1.currentFile = listView1.SelectedIndices[0];
-        //            if (visualRepresentationShowing == false)
-        //            {
-        //                newMDIChildForm1 = new Form1();
-        //                newMDIChildForm1.MdiParent = this;
-        //                newMDIChildForm1.Location = new Point(windowX, windowY);
-        //                newMDIChildForm1.Show();
-        //                visualRepresentationShowing = true;
-        //            }
-        //            else
-        //            {
-        //                closeOrChange = false;
-        //                newMDIChildForm1.Close();
-        //                newMDIChildForm1 = new Form1();
-        //                newMDIChildForm1.MdiParent = this;
-        //                newMDIChildForm1.Location = new Point(windowX, windowY);
-        //                newMDIChildForm1.Show();
-        //                visualRepresentationShowing = true;
-        //                closeOrChange = true;
-        //            }
-        //        }
-        //    }
-        //}
+        
 
         private void listView1_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
@@ -412,78 +443,54 @@ namespace WindowsFormsApplication1
             
         }
 
-        public static Complex[] FftWithWindow (Complex[] forFft)
-        {        
-            Complex[] fftCoefs = new Complex [2048];
-            for (int i = 0 ; i < 2048; i++)
-            {
-                fftCoefs[i] = new Complex(0, 0);
-            }
-            int k = 0;
-            for (int i = 0; i + 2048 < forFft.Length; i=i+512)
-            {
-                Complex[] forFftWindow = new Complex[2048];
-                Array.Copy(forFft, i, forFftWindow, 0, 2048);                
-                Complex[] fftWindow = Fourier.FFT(forFftWindow);
-                for (int j=0; j<2048; j++)
-                {
-                    fftCoefs[j] += fftWindow[j];
-                }
-                k++;
-            }
-            Complex kk = new Complex (k,0);
-            for (int i = 0; i < 2048; i++)
-            {
-                fftCoefs[i] = fftCoefs[i] / kk;
-            }
-            Complex[] fftCoefs2 = new Complex[fftCoefs.Length/2];
-            Array.Copy(fftCoefs, fftCoefs2, fftCoefs2.Length);
-            return fftCoefs2;
-        }
-
         private void fFTToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveFft = new SaveFileDialog();
-            saveFft.InitialDirectory = Application.StartupPath;
-            saveFft.Filter = "Текстовый документ (*.txt)|*.txt|Все файлы (*.*)|*.*";
-            double[] normalizedData = WAV.GetNormalizedData(Form1.newWav);
-           
-            //double[] normalizedData = new double[1024];
-            //Array.Copy(WAV.GetNormalizedData(Form1.newWav), normalizedData, 1024);
-            Complex[] forFft = Fourier.PrepareToFFT(normalizedData);
-            for (int j = 0; j < normalizedData.Length; j++)
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
             {
-                normalizedData[j] = normalizedData[j] * (0.53836 - 0.46164 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)));
-            }
-            Complex[] fftCoefs = Fourier.FFT(forFft);
-            //Complex[] fftCoefs = FftWithWindow(forFft);
-            //double[] magn = Fourier.GetMagnitude(fftCoefs);
-           
-            string text = "";
-            for (int i=0; i<fftCoefs.Length; i++)
-            {
-                text += fftCoefs[i].ToString() + "\r\n";
-                //text += magn[i] + "\r\n";
-            }
-            if (saveFft.ShowDialog(this) == DialogResult.OK)
-            {
-                string FileName = saveFft.FileName;
-                System.IO.File.WriteAllText(FileName, text);
+                SaveFileDialog saveFft = new SaveFileDialog();
+                saveFft.InitialDirectory = Application.StartupPath;
+                saveFft.Filter = "Текстовый документ (*.txt)|*.txt|Все файлы (*.*)|*.*";
+                double[] normalizedData = WAV.GetNormalizedData(Form1.newWav);
+
+                Complex[] forFft = Fourier.PrepareToFFT(normalizedData);
+                for (int j = 0; j < normalizedData.Length; j++)
+                {
+                    normalizedData[j] = normalizedData[j] * (0.53836 - 0.46164 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)));
+                }
+                Complex[] fftCoefs = Fourier.FFT(forFft);
+                //double[] magn = Fourier.GetMagnitude(fftCoefs);
+
+                string[] text = new string[fftCoefs.Length];
+                for (int i = 0; i < fftCoefs.Length; i++)
+                {
+                    text[i] = fftCoefs[i].ToString();
+                    //text[i] = magn[i].ToString();
+                }
+
+                if (saveFft.ShowDialog(this) == DialogResult.OK)
+                {
+                    string FileName = saveFft.FileName;
+                    System.IO.File.WriteAllLines(FileName, text);
+                }
             }
         }
         private void spectrumToolStripMenuItem_CheckStateChanged(object sender, EventArgs e)
         {
-            if (Exit == false || FileNames.Count != 0)
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            if (Exit == false && FileNames.Count != 0)
             {
                 if (FileNames[currentFile] != "")
                 {
                     if (spectrumToolStripMenuItem.Checked == true)
                     {
                         double[] normalizedData = WAV.GetNormalizedData(Form1.newWav);
-                        //for (int j = 0; j < normalizedData.Length; j++)
-                        //{
-                        //    normalizedData[j] = normalizedData[j] * (0.53836 - 0.46164 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)));
-                        //}
+                        for (int j = 0; j < normalizedData.Length; j++)
+                        {
+                            normalizedData[j] = normalizedData[j] * (0.53836 - 0.46164 * Math.Cos((2 * Math.PI * j) / (normalizedData.Length - 1)));
+                        }
                         Complex[] forFft = Fourier.PrepareToFFT(normalizedData);
                         Complex[] fftCoefs = Fourier.FFT(forFft);
                         double[] magn = Fourier.GetMagnitude(fftCoefs);
@@ -507,14 +514,378 @@ namespace WindowsFormsApplication1
                     }
                 }
             }
-            else
+            if(Exit == true)
                 spectrumWindow.Close();
         }
 
         private void mFCCToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Form5 mfccWindow = new Form5();
-            mfccWindow.Show();
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                Form5 mfccWindow = new Form5();
+                mfccWindow.Show();
+            }
+        }
+
+        private void lPCToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                modeOfLpcWindow = 1;
+                Form6 lpcWindow = new Form6();
+                lpcWindow.Show();
+            }
+        }
+
+        private void cepstralToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                modeOfLpcWindow = 2;
+                Form6 lpcWindow = new Form6();
+                lpcWindow.Show();
+            }
+        }
+
+        private void pLPToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                Form7 plpWindow = new Form7();
+                plpWindow.Show();
+            }
+        }
+
+        private void pitchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                Pictures form = new Pictures();
+                pictureMode = 2;
+                form.Show();
+            }
+        }
+
+        private void formantsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                Pictures form = new Pictures();
+                pictureMode = 3;
+                form.Show();
+            }
+        }
+
+        private void vectorQuantinizationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            identificationTask = 1;
+            classificationMode = 1;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void vectorQuantinizationToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            identificationTask = 2;
+            classificationMode = 1;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void gaussianMixtureModelToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            identificationTask = 1;
+            classificationMode = 2;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void gaussianMixtureModelToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            identificationTask = 2;
+            classificationMode = 2;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void supportVectorMachineToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            identificationTask = 2;
+            classificationMode = 3;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void lowPassFilterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                filterMode = 1;
+                Filter filterWindow = new Filter();
+                filterWindow.Show();
+            }
+        }
+
+        private void highPassFilterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                filterMode = 2;
+                Filter filterWindow = new Filter();
+                filterWindow.Show();
+            }
+        }
+
+        private void bandPassFilterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                filterMode = 3;
+                Filter filterWindow = new Filter();
+                filterWindow.Show();
+            }
+        }
+
+        private void movingAverageFilterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                filterMode = 4;
+                Filter filterWindow = new Filter();
+                filterWindow.Show();
+            }
+        }
+
+        private void batchProcessingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            batchProcessing BPwindow = new batchProcessing();
+            BPwindow.Show();
+        }
+
+        private void silenceRemovalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                changesHaveBeenMade = true;
+                WAV buffer = CreateBuffer(Form1.newWav);
+                buffer.LeftChData = SignalProcessing.SilenceDetection(WAV.GetNormalizedData(Form1.newWav), 1024);
+                buffer.wavData = WAV.ComputeBytesOfWavData(buffer.LeftChData);
+                Form1.buf[0] = Form1.newWav;
+                Form1.buf[1] = buffer;
+                Form1.newWav = CreateBuffer(buffer);
+                for (int i = 0; i < Form1.newWav.LeftChData.Length; i++)
+                    Form1.newWav.LeftChData[i] *= 32768;
+                MDIParent1.newMDIChildForm1.Width += 1;
+            }
+        }
+
+        private void undoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (MDIParent1.changesHaveBeenMade == true)
+            {
+                Form1.newWav = Form1.buf[0];
+                changesHaveBeenMade = false;
+            }
+
+        }
+
+        private void redoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form1.newWav = Form1.buf[1];
+            changesHaveBeenMade = true;
+        }
+
+        public WAV CreateBuffer(WAV newWav)
+        {
+            WAV buffer = new WAV();
+            buffer.LeftChData = new double[newWav.LeftChData.Length];
+            if (newWav.channels == 1)
+            {
+                buffer.wavData = newWav.wavData;
+                Array.Copy(newWav.wavData, buffer.wavData, newWav.wavData.Length);
+            }
+            buffer.chunkID = newWav.chunkID;
+            buffer.riffType = newWav.riffType;
+            buffer.fmtID = newWav.fmtID;
+            buffer.fmtSize = newWav.fmtSize;
+            buffer.fmtCode = newWav.fmtCode;
+            buffer.channels = 1;
+            buffer.sampleRate = newWav.sampleRate;
+            buffer.fmtAvgBPS = newWav.fmtAvgBPS;
+            if (newWav.channels == 2)
+                buffer.fmtAvgBPS /= 2;
+            buffer.fmtBlockAlign = newWav.fmtBlockAlign;
+            if (newWav.channels == 2)
+                buffer.fmtBlockAlign /= 2;
+            buffer.bitDepth = newWav.bitDepth;
+            buffer.dataID = newWav.dataID;
+
+            if (newWav.channels == 2)
+            {
+                buffer.wavData = new byte[newWav.wavData.Length / 2];
+                int k = 0;
+                for (int i = 0; i < newWav.wavData.Length; i = i + 4)
+                {
+                    if (i % 4 == 0)
+                    {
+                        buffer.wavData[k] = newWav.wavData[i];
+                        buffer.wavData[k + 1] = newWav.wavData[i + 1];
+                        k = k + 2;
+                    }
+                }
+            }
+            Array.Copy(newWav.LeftChData, buffer.LeftChData, newWav.LeftChData.Length);
+
+            buffer.dataSize = buffer.LeftChData.Length * buffer.channels * buffer.bitDepth / 8;
+            buffer.fileSize = (uint)(buffer.dataSize + 36);
+            WAV.Writing2(buffer, Application.StartupPath + @"\" + "buffer");
+            return buffer;
+        }
+
+        private void спектрограммаToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                Pictures form = new Pictures();
+                pictureMode = 1;
+                form.Show();
+            }
+        }
+
+        private void машинаОпорныхВекторовToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            identificationTask = 2;
+            classificationMode = 3;
+            Form8 wnd = new Form8();          
+            wnd.Show();
+        }
+
+        private void supportVectorMachineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            identificationTask = 1;
+            classificationMode = 3;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+
+        private void векторноеКвантованиеToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            identificationTask = 3;
+            classificationMode = 1;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void смесьГауссовскихРаспределенийToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            identificationTask = 3;
+            classificationMode = 2;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void методОпорныхВекторовToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            identificationTask = 3;
+            classificationMode = 3;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void векторноеКвантованиеToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            identificationTask = 2;
+            classificationMode = 1;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void смесьГауссовскихРаспределенийToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            identificationTask = 2;
+            classificationMode = 2;
+            Form8 VQWindow = new Form8();
+            VQWindow.Show();
+        }
+
+        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                specialCase1 = true;
+                newMDIChildForm1.Refresh();
+            }
+        }
+
+        private void pasteSilenceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                changesHaveBeenMade = true;
+                int c = Form1.countUnderCursor;
+                if (Form1.countUnderCursor % 2 == 1)
+                    c++;
+                WAV buffer = CreateBuffer(Form1.newWav);
+                buffer.LeftChData = new double[Form1.newWav.LeftChData.Length + 10000];
+                for (int i = 0; i < c; i++)
+                    buffer.LeftChData[i] = Form1.newWav.LeftChData[i];
+                for (int i = c; i < c + 10000; i++)
+                   buffer.LeftChData[i] = 0;
+                for (int i = c + 10000; i < buffer.LeftChData.Length; i++)
+                    buffer.LeftChData[i] = Form1.newWav.LeftChData[i - 10000];
+                Form1.buf[0] = Form1.newWav;
+                Form1.buf[1] = buffer;
+                Form1.newWav = CreateBuffer(buffer);
+                for (int i = 0; i < Form1.newWav.LeftChData.Length; i++)
+                    Form1.newWav.LeftChData[i] *= 32768;
+                MDIParent1.newMDIChildForm1.Width += 1;
+            }
+        }
+
+        private void полоснозаграждающийФильтрToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (FileNames.Count == 0)
+                MessageBox.Show("Нет открытых файлов");
+            else
+            {
+                filterMode = 5;
+                Filter filterWindow = new Filter();
+                filterWindow.Show();
+            }
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Программный комплекс интеллектуальной обработки речевых сигналов. Сделано в КФУ, 2015 год");
         }
     }
 }

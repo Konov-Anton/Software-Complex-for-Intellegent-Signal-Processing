@@ -35,8 +35,8 @@ namespace WindowsFormsApplication1
         Bitmap bmp;
         double pos = 0;
         bool leftMouseButtonPressed = false;
-        int countUnderCursor = 0;
-        int countUnderCursorEnd = 0;
+        public static int countUnderCursor = 0;
+        public static int countUnderCursorEnd = 0;
         int lastCountOfArea = 0;
         bool firstlyPlayed = true;
         SoundPlayer playingNow = new SoundPlayer();
@@ -63,6 +63,8 @@ namespace WindowsFormsApplication1
         int something = 0;
         int something2 = 0;
         bool positionChanged = false;
+        public static bool cantBlockWindow = false;
+        public static WAV[] buf = new WAV[2]; //[0] - исходный, [1] - с одним изменением
         public Form1()
         {
             InitializeComponent();
@@ -78,6 +80,9 @@ namespace WindowsFormsApplication1
             {
                 if (MDIParent1.FileNames[MDIParent1.currentFile] != "")
                 {
+                    step = (double)(this.Width) * scalingRatio / newWav.sampleRate / 10.0;
+                    double param = newWav.LeftChData.Max() / 64;
+                    //countUnderCursor = CountUnderCursor(PickOutFrom.X);
                     int countsUnderScrollbar = (int)(pos * newWav.LeftChData.Length);
                     if (areaPaintingMode == 1)
                     {
@@ -97,7 +102,23 @@ namespace WindowsFormsApplication1
                         length1,
                         pictureBox1.Height - 20);
                     }
+                    if(MDIParent1.specialCase1 == true)
+                    {
+                        MDIParent1.specialCase1 = false;
+                        g.Clear(Color.White);
+                        e.Graphics.FillRectangle(System.Drawing.Brushes.Black, (float)(0),
+                        pictureBox1.Location.Y,
+                        pictureBox1.Width,
+                        pictureBox1.Height - 20);
+                    }
                     mid = pictureBox1.Height / 2;
+                    e.Graphics.DrawLine(System.Drawing.Pens.Black, 1, pictureBox1.Height, 1, pictureBox1.Location.Y);
+                    e.Graphics.DrawLine(System.Drawing.Pens.Black, 1, mid + 66, 6, mid + 66);
+                    System.Drawing.Font font = new System.Drawing.Font("Arial", 8);
+                    System.Drawing.SolidBrush brush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
+                    e.Graphics.DrawString((-Math.Pow(2, newWav.bitDepth)).ToString(), font, brush, 7, mid + 57);
+                    e.Graphics.DrawLine(System.Drawing.Pens.Black, 1, mid - 66, 6, mid - 66);
+                    e.Graphics.DrawString(Math.Pow(2, newWav.bitDepth).ToString(), font, brush, 7, mid - 73);
                     double dur = Math.Round((double)Form1.newWav.wavData.Length / (double)Form1.newWav.fmtAvgBPS, 3);
                     switch (timeScaleMode)
                     {
@@ -159,7 +180,7 @@ namespace WindowsFormsApplication1
                             break;
 
                     }
-                    step = (double)(this.Width) * scalingRatio / newWav.sampleRate / 10.0;
+                    
                     e.Graphics.DrawLine(System.Drawing.Pens.Gray, pictureBox1.Location.X, mid, pictureBox1.Width, mid);
                     e.Graphics.DrawLine(System.Drawing.Pens.Black, pictureBox1.Location.X, pictureBox1.Height - 5, pictureBox1.Width, pictureBox1.Height - 5);
                     float x = (float)pictureBox1.Location.X;
@@ -188,16 +209,16 @@ namespace WindowsFormsApplication1
                         {
                             if (l == countUnderCursor)
                             {
-                                e.Graphics.DrawLine(System.Drawing.Pens.Gray, (float)((countUnderCursor - (int)(pos * newWav.LeftChData.Length)) * step),
-                                    pictureBox1.Location.Y,
-                                    (float)((countUnderCursor - pos * newWav.LeftChData.Length) * step),
-                                    pictureBox1.Height);
+                                    e.Graphics.DrawLine(System.Drawing.Pens.Gray, (float)((countUnderCursor - (int)(pos * newWav.LeftChData.Length)) * step),
+                                        pictureBox1.Location.Y,
+                                        (float)((countUnderCursor - pos * newWav.LeftChData.Length) * step),
+                                        pictureBox1.Height);
                             }
                             if (l % (newWav.sampleRate * 5) == 0)
                             {
                                 e.Graphics.DrawLine(System.Drawing.Pens.Black, (float)xTimeAxis, pictureBox1.Height - 5, (float)xTimeAxis, pictureBox1.Height - 12);
                                 double time = l / newWav.sampleRate;
-                                string duration = WAV.GetDuration(time);
+                                string duration = WAV.GetDuration(time,0);
                                 System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 8);
                                 System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                 e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -211,7 +232,7 @@ namespace WindowsFormsApplication1
                                     if (TimeAxisDetailization >= 2)
                                     {
                                         double time = l / newWav.sampleRate;
-                                        string duration = WAV.GetDuration(time);
+                                        string duration = WAV.GetDuration(time,0);
                                         System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 8);
                                         System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                         e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -232,7 +253,7 @@ namespace WindowsFormsApplication1
                                 if (l % (newWav.sampleRate / 2) == 0 && (l / (newWav.sampleRate / 2) % 2 == 1))
                                 {
                                     double time = (double)l / newWav.sampleRate / 10;
-                                    string duration = WAV.GetDuration(time);
+                                    string duration = WAV.GetDuration(time,0);
                                     System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 6);
                                     System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                     e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -248,7 +269,7 @@ namespace WindowsFormsApplication1
                                 if (l % (newWav.sampleRate / 5) == 0 && (l / (newWav.sampleRate / 5) % 5 != 0))
                                 {
                                     double time = (double)l / newWav.sampleRate / 10;
-                                    string duration = WAV.GetDuration(time);
+                                    string duration = WAV.GetDuration(time,0);
                                     System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 6);
                                     System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                     e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -259,8 +280,8 @@ namespace WindowsFormsApplication1
 
                             if (i < upperBound - skipNcounts + 1)
                             {
-                                e.Graphics.DrawLine(System.Drawing.Pens.Blue, (float)x, (float)(mid + newWav.LeftChData[i] / 512 * verticalScale),
-                                    (float)(x + skipNcounts * step), (float)(mid + newWav.LeftChData[i + skipNcounts] / 512 * verticalScale));
+                                e.Graphics.DrawLine(System.Drawing.Pens.Blue, (float)x, (float)(mid + newWav.LeftChData[i] / param * verticalScale),
+                                    (float)(x + skipNcounts * step), (float)(mid + newWav.LeftChData[i + skipNcounts] / param * verticalScale));
 
                                 x = (float)(x + skipNcounts * step);
                             }
@@ -303,14 +324,14 @@ namespace WindowsFormsApplication1
                             {
                                 e.Graphics.DrawLine(System.Drawing.Pens.Gray, (float)((countUnderCursor - (int)(pos * newWav.LeftChData.Length)) * step),
                                     pictureBox1.Location.Y,
-                                    (float)((countUnderCursor - (int)pos * newWav.LeftChData.Length) * step),
+                                    (float)((countUnderCursor - (int)(pos * newWav.LeftChData.Length)) * step),
                                     pictureBox1.Height);
                             }
                             if (l % (newWav.sampleRate * 5) == 0)
                             {
                                 e.Graphics.DrawLine(System.Drawing.Pens.Black, (float)xTimeAxis, pictureBox1.Height - 5, (float)xTimeAxis, pictureBox1.Height - 12);
                                 double time = l / newWav.sampleRate;
-                                string duration = WAV.GetDuration(time);
+                                string duration = WAV.GetDuration(time,0);
                                 System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 8);
                                 System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                 e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -324,7 +345,7 @@ namespace WindowsFormsApplication1
                                     if (TimeAxisDetailization >= 2)
                                     {
                                         double time = l / newWav.sampleRate;
-                                        string duration = WAV.GetDuration(time);
+                                        string duration = WAV.GetDuration(time,0);
                                         System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 8);
                                         System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                         e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -339,7 +360,7 @@ namespace WindowsFormsApplication1
                                 if (l % (newWav.sampleRate / 5) == 0 && (l / (newWav.sampleRate / 5) % 5 != 0))
                                 {
                                     double time = (double)l / newWav.sampleRate / 10;
-                                    string duration = WAV.GetDuration(time);
+                                    string duration = WAV.GetDuration(time,0);
                                     System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 6);
                                     System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                     e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -352,7 +373,7 @@ namespace WindowsFormsApplication1
                                 if (l % (newWav.sampleRate / 10) == 0 && (l / (newWav.sampleRate / 10) % 10 != 0))
                                 {
                                     double time = (double)l / newWav.sampleRate / 10;
-                                    string duration = WAV.GetDuration(time);
+                                    string duration = WAV.GetDuration(time,0);
                                     System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 6);
                                     System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                     e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -366,7 +387,7 @@ namespace WindowsFormsApplication1
                                 if (l % (newWav.sampleRate / 20) == 0 && (l / (newWav.sampleRate / 20) % 20 != 0))
                                 {
                                     double time = (double)l / newWav.sampleRate / 10;
-                                    string duration = WAV.GetDuration(time);
+                                    string duration = WAV.GetDuration(time,0);
                                     System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 6);
                                     System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                     e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -380,7 +401,7 @@ namespace WindowsFormsApplication1
                                 if (l % (newWav.sampleRate / 20) == 0 && (l / (newWav.sampleRate / 20) % 20 != 0))
                                 {
                                     double time = (double)l / newWav.sampleRate / 10;
-                                    string duration = WAV.GetDuration(time);
+                                    string duration = WAV.GetDuration(time,0);
                                     System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 6);
                                     System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                     e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -394,7 +415,7 @@ namespace WindowsFormsApplication1
                                 if (l % (newWav.sampleRate / 100) == 0 && (l / (newWav.sampleRate / 100) % 100 != 0))
                                 {
                                     double time = (double)l / newWav.sampleRate / 10;
-                                    string duration = WAV.GetDuration(time);
+                                    string duration = WAV.GetDuration(time,0);
                                     System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 6);
                                     System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
                                     e.Graphics.DrawString(duration, drawFont, drawBrush, xTimeAxis, pictureBox1.Height - 20);
@@ -402,41 +423,19 @@ namespace WindowsFormsApplication1
                                     drawBrush.Dispose();
                                 }
                             }
-                            //if (Math.Abs((int)(pos * newWav.LeftChData.Length + l) - cursorPositionOnAxis) < 1)
-                            //if (l == cursorPositionOnAxis)
-                            //{
-                            //if (PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width > pos * newWav.LeftChData.Length * step)
-                            //{
-                            //    e.Graphics.DrawLine(System.Drawing.Pens.Gray,
-                            //        (float)(PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width - pos * newWav.LeftChData.Length * step),
-                            //        pictureBox1.Location.Y,
-                            //        (float)(PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width - pos * newWav.LeftChData.Length * step),
-                            //        pictureBox1.Height);
-                            //    pictureBox1.Image = bmp;
 
-                            //}
-                            //else
-                            //{
-                            //    e.Graphics.DrawLine(System.Drawing.Pens.Gray,
-                            //        (float)(PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width + pos * newWav.LeftChData.Length * step),
-                            //        pictureBox1.Location.Y,
-                            //        (float)(PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width + pos * newWav.LeftChData.Length * step),
-                            //        pictureBox1.Height);
-                            //    pictureBox1.Image = bmp;
-                            //}
-                            //}
-                            e.Graphics.DrawLine(System.Drawing.Pens.Blue, (float)x, (float)(mid + newWav.LeftChData[i] / 512 * verticalScale),
-                                (float)(x + skipNcounts * step), (float)(mid + newWav.LeftChData[i + skipNcounts] / 512 * verticalScale));
+                            e.Graphics.DrawLine(System.Drawing.Pens.Blue, (float)x, (float)(mid + newWav.LeftChData[i] / param * verticalScale),
+                                (float)(x + skipNcounts * step), (float)(mid + newWav.LeftChData[i + skipNcounts] / param * verticalScale));
 
                             if (TimeAxisDetailization == 11)
                             {
-                                RectangleF pointValue = new RectangleF((float)(x - 1), (float)(mid + newWav.LeftChData[i] / 512 * verticalScale - 1), 2f, 2f);
+                                RectangleF pointValue = new RectangleF((float)(x - 1), (float)(mid + newWav.LeftChData[i] / param * verticalScale - 1), 2f, 2f);
                                 e.Graphics.FillRectangle(System.Drawing.Brushes.Blue, pointValue);
                             }
 
                             if (TimeAxisDetailization == 12)
                             {
-                                RectangleF pointValue = new RectangleF((float)(x - 2), (float)(mid + newWav.LeftChData[i] / 512 * verticalScale - 2), 4f, 4f);
+                                RectangleF pointValue = new RectangleF((float)(x - 2), (float)(mid + newWav.LeftChData[i] / param * verticalScale - 2), 4f, 4f);
                                 e.Graphics.FillRectangle(System.Drawing.Brushes.Blue, pointValue);
                             }
 
@@ -451,13 +450,14 @@ namespace WindowsFormsApplication1
                         }
                     }
                     if (mouseWheel == true)
-                    {
-                        g.Clear(Color.White);
-                        g.DrawLine(System.Drawing.Pens.Gray, (float)(countUnderCursor * step - (int)(pos * newWav.LeftChData.Length) * step),
-                            pictureBox1.Location.Y,
-                            (float)(countUnderCursor * step - (int)(pos * newWav.LeftChData.Length) * step),
-                            pictureBox1.Height - 5);
-                        pictureBox1.Image = bmp;
+                    {                  
+                            g.Clear(Color.White);
+                            g.DrawLine(System.Drawing.Pens.Gray, (float)(countUnderCursor - (int)(pos * newWav.LeftChData.Length) * step),
+                                pictureBox1.Location.Y,
+                                (float)(countUnderCursor - (int)(pos * newWav.LeftChData.Length) * step),
+                                pictureBox1.Height - 5);
+                            pictureBox1.Image = bmp;
+                        
                     }
                     if (areaIsSelected == true && mouseWheel == true)
                     {
@@ -509,15 +509,10 @@ namespace WindowsFormsApplication1
                         }
                     }
                     mouseWheel = false;
-                    if (Form5.cantBlockWindow == false)
+                    if (cantBlockWindow == false)
                         pictureBox1.Focus();
                 }
             }
-            //if (CursorPainted == true)
-            //{
-            //    g.DrawLine(System.Drawing.Pens.Gray, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace, pictureBox1.Location.Y, PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace, pictureBox1.Height);
-            //}
-
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -628,19 +623,26 @@ namespace WindowsFormsApplication1
                 }
                 if (MDIParent1.FileNames.Count == 0)
                     MDIParent1.closeToolStripMenuItem.Enabled = false;
+                MDIParent1.changesHaveBeenMade = false;
+                buf[1] = null;
             }
         }
         private void Form1_Activated(object sender, EventArgs e)
         {
-            //if (MDIParent1.WorkSpaces.Count > 0)
-            //{
-            if (Form5.cantBlockWindow == false)
+            if (cantBlockWindow == false)
                 pictureBox1.Focus();
             if (MDIParent1.Exit == false)
             {
-                MDIParent1.currentFile = MDIParent1.FileNames.FindIndex(0, MDIParent1.FileNames.Count, FindName);
-                newWav = WAV.Reading(MDIParent1.FileNames[MDIParent1.currentFile]);
- //               this.Refresh();
+                if (MDIParent1.changesHaveBeenMade == true && buf[1] != null)
+                {
+                    newWav = WAV.Reading(Application.StartupPath + @"\" + "buffer");
+                }
+                else
+                {
+                    MDIParent1.currentFile = MDIParent1.FileNames.FindIndex(0, MDIParent1.FileNames.Count, FindName);
+                    newWav = WAV.Reading(MDIParent1.FileNames[MDIParent1.currentFile]);
+                    //               this.Refresh();
+                }
             }
         }
         private bool FindName(string FileName)
@@ -693,7 +695,8 @@ namespace WindowsFormsApplication1
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
+        {       if (MDIParent1.newMDIChildForm2 != null)
+                    MDIParent1.newMDIChildForm2.Close();
                 if (MDIParent1.changesHaveBeenMade == true)
                 {
                     string[] splitted = MDIParent1.FileNames[MDIParent1.currentFile].Split('\\');
@@ -834,11 +837,8 @@ namespace WindowsFormsApplication1
                     playingNow.Load();
                     firstlyPlayed = false;
                     isPlayingNow = true;
-                    timer.Interval = 300;
-                    timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
                 }
                 cursorPos = PickOutFrom.X + MDIParent1.difBtwMainAndWorkSpace - MDIParent1.listView1.Width;
-                //cursorPos = (int)(pos * newWav.LeftChData.Length) + (int)( / step); ;
                 if (cursorPos < 0)
                     cursorPos = 0;
                 playingPosition = (int)(pos * newWav.LeftChData.Length) + (int)((PickOutFrom.X + 
@@ -885,64 +885,8 @@ namespace WindowsFormsApplication1
 
         private void pictureBox1_MouseLeave(object sender, EventArgs e)
         {
-            if (Form5.cantBlockWindow == false)
+            if (cantBlockWindow == false)
                 MDIParent1.listView1.Focus();
-        }
-
-        private void OnTimedEvent(object source, ElapsedEventArgs e)
-        {
-            if (isPlayingNow == true)
-            {
-                if (playingPosition > endOfPlaying)
-                {
-                    isPlayingNow = false;
-
-                    hScrollBar1.Enabled = true;
-                    setCursorBack();
-                    playingNow.Dispose();
-                    timer.Close();
-                }
-                else
-                {
-                    double newCursorPos = cursorPos + iii * 14700 * step;
-                    g.Clear(Color.White);
-                    g.DrawLine(System.Drawing.Pens.Gray, (float)newCursorPos,
-                         pictureBox1.Location.Y, (float)newCursorPos, pictureBox1.Height);
-                    pictureBox1.Image = bmp;
-                    int countUnderMovingCursor = (int)(newCursorPos / step);
-                    playingPosition += 14700 - residue;
-                    residue = 0;
-                    if (countUnderMovingCursor > newWav.sampleRate * 10 / (Math.Pow(2,timeScaleMode)))
-                    {
-                        cursorPos = 0;
-                        if (stubbornPlacePassed == false)
-                        {
-                            if (hScrollBar1.Value + scrollBarDif < 100)
-                            {
-                                hScrollBar1.Value += scrollBarDif;
-                                B = CountUnderCursor(pictureBox1.Location.X);
-                                cursorPos = Math.Abs(B - A);
-                                residue = cursorPos;
-                                A = CountUnderCursor(pictureBox1.Width);
-                            }
-                            else
-                            {
-                                if (hScrollBar1.Value < 100)
-                                {
-                                    hScrollBar1.Value = hScrollBar1.Value + scrollBarDif;
-                                }
-                            }
-                            iii = 0;
-                            stubbornPlacePassed = true;
-                        }
-                        else
-                        {
-                            stubbornPlacePassed = false;
-                        }
-                    }
-                    iii++;
-                }
-            }
         }
 
         private void setCursorBack()
@@ -977,7 +921,7 @@ namespace WindowsFormsApplication1
 
         private void pictureBox1_MouseHover_1(object sender, EventArgs e)
         {
-            if (Form5.cantBlockWindow == false)
+            if (cantBlockWindow == false)
                 pictureBox1.Focus();
         }
 

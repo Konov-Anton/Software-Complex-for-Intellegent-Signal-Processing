@@ -19,9 +19,10 @@ namespace WindowsFormsApplication1
 
         double maxMagn = 0;
         int indexOfMax = 0;
+        bool scaleDone = false;
         private void Form4_Load(object sender, EventArgs e)
         {
-            this.Location = new Point(300, 300);
+            this.Location = new Point(0, 300);
             pictureBox1.Show();
         }
 

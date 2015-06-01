@@ -76,7 +76,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(123, 94);
+            this.label3.Location = new System.Drawing.Point(123, 105);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(53, 13);
             this.label3.TabIndex = 3;
@@ -85,7 +85,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(93, 120);
+            this.label4.Location = new System.Drawing.Point(93, 145);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(118, 13);
             this.label4.TabIndex = 4;
@@ -94,7 +94,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(77, 146);
+            this.label5.Location = new System.Drawing.Point(77, 171);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(150, 13);
             this.label5.TabIndex = 5;
@@ -107,7 +107,7 @@
             this.textBox1.ShortcutsEnabled = false;
             this.textBox1.Size = new System.Drawing.Size(100, 20);
             this.textBox1.TabIndex = 6;
-            this.textBox1.Text = "2048";
+            this.textBox1.Text = "1024";
             this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.textBox1.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox1_KeyPress);
             this.textBox1.Leave += new System.EventHandler(this.textBox1_Leave);
@@ -119,14 +119,14 @@
             this.textBox2.ShortcutsEnabled = false;
             this.textBox2.Size = new System.Drawing.Size(100, 20);
             this.textBox2.TabIndex = 7;
-            this.textBox2.Text = "1536";
+            this.textBox2.Text = "512";
             this.textBox2.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.textBox2.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox2_KeyPress);
             this.textBox2.Leave += new System.EventHandler(this.textBox2_Leave);
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(263, 117);
+            this.textBox3.Location = new System.Drawing.Point(263, 142);
             this.textBox3.Name = "textBox3";
             this.textBox3.ShortcutsEnabled = false;
             this.textBox3.Size = new System.Drawing.Size(100, 20);
@@ -137,12 +137,12 @@
             // 
             // textBox4
             // 
-            this.textBox4.Location = new System.Drawing.Point(263, 143);
+            this.textBox4.Location = new System.Drawing.Point(263, 168);
             this.textBox4.Name = "textBox4";
             this.textBox4.ShortcutsEnabled = false;
             this.textBox4.Size = new System.Drawing.Size(100, 20);
             this.textBox4.TabIndex = 10;
-            this.textBox4.Text = "10";
+            this.textBox4.Text = "12";
             this.textBox4.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.textBox4.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox4_KeyPress);
             // 
@@ -154,16 +154,16 @@
             "Хэннинг",
             "Блэкман",
             "Прямоугольное"});
-            this.listBox1.Location = new System.Drawing.Point(263, 94);
+            this.listBox1.Location = new System.Drawing.Point(263, 97);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(100, 17);
+            this.listBox1.Size = new System.Drawing.Size(100, 30);
             this.listBox1.TabIndex = 11;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(65, 174);
+            this.label6.Location = new System.Drawing.Point(65, 199);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(181, 13);
             this.label6.TabIndex = 12;
@@ -172,7 +172,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(53, 200);
+            this.label7.Location = new System.Drawing.Point(53, 225);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(204, 13);
             this.label7.TabIndex = 13;
@@ -180,7 +180,7 @@
             // 
             // textBox5
             // 
-            this.textBox5.Location = new System.Drawing.Point(263, 171);
+            this.textBox5.Location = new System.Drawing.Point(263, 196);
             this.textBox5.Name = "textBox5";
             this.textBox5.ShortcutsEnabled = false;
             this.textBox5.Size = new System.Drawing.Size(100, 20);
@@ -191,7 +191,7 @@
             // 
             // textBox6
             // 
-            this.textBox6.Location = new System.Drawing.Point(263, 197);
+            this.textBox6.Location = new System.Drawing.Point(263, 222);
             this.textBox6.Name = "textBox6";
             this.textBox6.ShortcutsEnabled = false;
             this.textBox6.Size = new System.Drawing.Size(100, 20);
