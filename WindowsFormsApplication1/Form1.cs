@@ -671,7 +671,6 @@ namespace WindowsFormsApplication1
             leftMouseButtonPressed = true;
             PickOutFrom = Control.MousePosition;
             cursorPositionOnAxis = CountUnderCursor(PickOutFrom.X);
-            textBox1.Text += CountUnderCursor(PickOutFrom.X) + "   ";
             PickOutBefore = new Point(-1, -1);
             g.Clear(Color.White);
 
@@ -814,8 +813,6 @@ namespace WindowsFormsApplication1
                     hScrollBar1.LargeChange = scrollBarDif;
 
             something = 0;
-            textBox1.Text += timeScaleMode + " ";
-            textBox1.Text += scrollBarDif + "   ";
             pictureBox1.Refresh();
         }
 
@@ -906,8 +903,7 @@ namespace WindowsFormsApplication1
         private void hScrollBar1_ValueChanged(object sender, EventArgs e)
         {
             g.Clear(Color.White);
-            pos = hScrollBar1.Value / 100.0;
-            textBox1.Text += hScrollBar1.Value + "  " ;          
+            pos = hScrollBar1.Value / 100.0;     
             pictureBox1.Refresh(); 
             
         }

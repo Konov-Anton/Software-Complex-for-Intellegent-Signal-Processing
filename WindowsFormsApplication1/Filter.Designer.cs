@@ -115,7 +115,7 @@
             // 
             this.label1.Location = new System.Drawing.Point(104, 27);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(84, 17);
+            this.label1.Size = new System.Drawing.Size(178, 17);
             this.label1.TabIndex = 9;
             this.label1.Text = "Частота среза";
             // 
@@ -158,7 +158,7 @@
             // 
             this.label3.Location = new System.Drawing.Point(104, 1);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(84, 17);
+            this.label3.Size = new System.Drawing.Size(160, 17);
             this.label3.TabIndex = 42;
             this.label3.Text = "Частота среза";
             this.label3.Visible = false;
